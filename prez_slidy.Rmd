@@ -1,0 +1,272 @@
+---
+title: "Scraping with rvest and RSelenium"
+author: "Filip Rodik; Ana Janković"
+date: 2018-04-04
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("funkcije.R")
+library(knitr)
+library(kableExtra) # print table
+```
+
+## Scraping with rvest and RSelenium
+
+![](img/ZagReb.png)
+
+Filip Rodik, Ana Janković
+
+2018-04-04
+
+## Teme
+
+- Scraping
+- **rvest**: 
+    + simple paging
+    + HTML table > data.frame
+    + kompleksnije strukture
+    + iteriranje
+- **RSelenium**: 
+    + browser automation
+    + iframe
+    
+## Scraping (sveden na 3 bulleta)
+
+1. Navigiraj na stranicu (učitaj HTML)
+2. Parsiraj podatke
+3. Počisti pročitane podatke
+
+U slučaju da postoji paging
+
+1. Inicijalizacija
+2. Iteriraj po stranicama
+    + navigiraj
+    + parsiraj
+    + počisti
+    + **dodaj** u glavnu kolekciju
+    
+## Scraping - Korisni alati
+
+- View the source (Luke)
+- browser developer tools (F12)
+- [Selector gadget](http://selectorgadget.com/){target="_blank"}
+    + CSS selector
+    + Chrome extension
+
+## rvest
+
+- [GitHub hadley/rvest](https://github.com/hadley/rvest){target="_blank"}
+
+Primjeri:
+
+1. Izravno čitanje HTML **table** elementa
+    + html_table()
+2. Parsiranje HTML _kompleksne_ strukture + Paging
+    + hijerarhija elemenata
+    + atributi
+    + "dinamički" URL
+```{r libs, echo = TRUE, message=FALSE}
+library(rvest)
+# data cleaning
+library(magrittr)
+library(plyr)
+library(dplyr)
+```
+
+## rvest - navigacija
+
+Čitanje HTML-a
+
+```{r navigate1}
+# definiraj url
+url <- "http://www.index.hr/arhiva/vijesti/2018/1/1"
+# procitaj stranicu
+arhiva_html <- read_html(url)
+# print class
+class(arhiva_html)
+```
+
+
+## rvest - navigacija paging
+
+index.hr/arhiva/vijesti/**2018/1/1**
+
+```{r navigate2}
+# definiraj staticni dio URL-a
+url_root <- "http://www.index.hr/arhiva/vijesti/"
+# definiraj pocetni datum
+datum <- as.Date("2018-01-01")
+# format(datum, "%Y/%m/%d")
+datum_string <- paste(
+    format(datum,"%Y"),
+    as.numeric(format(datum, "%m")),
+    as.numeric(format(datum, "%d")),
+    sep = "/"
+)
+# napravi puni URL
+url <- paste0(url_root, datum_string) 
+url # print
+```
+
+## rvest - simple
+
+html_table
+preuzeti projekt skrejpanja drzavnog registra imovine
+```{r cars, eval=FALSE}
+parsiraj.stranicu <- function(url){
+    # pokupi html
+    stranica <- read_html(url, encoding = "UTF-8")
+    # dohvati tablicu
+    rows <- stranica %>%
+        html_node(".tblView") %>% 
+        html_table()
+    # pretvori sve kolone u string
+    rows <- rows %>%
+        mutate_all(as.character)
+    # vrati tablicu kao data.frame
+    rows
+}
+```
+
+## rvest - parsiranje 1
+
+```
+<a href="/vijesti/clanak/detalji-tragedije-u-rijeci-kad-je-prvi-poceo-zapomagati-mislio-sam-da-se-sali/1016862.aspx" class="arhivaBox" title="Detalji tragedije u Rijeci: &quot;Kad je prvi počeo zapomagati, mislio sam da se šali&quot;">
+   <p class="naslov">Detalji tragedije u Rijeci: &quot;Kad je prvi počeo zapomagati, mislio sam da se šali&quot;</p>
+   <p class="podnaslov">1.1.2018. 21:59:10 / Vijesti</p>
+   <p>NA tradicionalnom novogodišnjem kupanju na riječkim Pećinama dogodila strašna tragedija, a svjedoci su ispričali kako je to izgledalo.</p>
+</a>
+
+<a href="/vijesti/clanak/pogledajte-novogodisnje-poruke-znanstvenika-index-laba/1016801.aspx" class="arhivaBox" title="Pogledajte novogodišnje poruke znanstvenika Index laba">
+   <p class="naslov">Pogledajte novogodišnje poruke znanstvenika Index laba</p>
+   <p class="podnaslov">1.1.2018. 21:55:19 / Vijesti</p>
+   <p>VRHUNSKI hrvatski znanstvenici koji pišu za Index lab čitateljima su uputili svoje prigodne poruke.</p>
+</a>
+```
+
+## rvest - parsiranje 2
+
+Čitanje HTML-a
+```{r parse1, cache.vars=c("trenutne_vijesti")}
+# procitaj stranicu
+arhiva_html <- read_html(url)
+# procitaj trenutnu stranicu kao data.frame
+trenutne_vijesti <- arhiva_html %>%
+    html_nodes(".arhivaBox") %>% # trazi class
+    ldply(obradi.node) # parsiraj svaki node funkcijom
+```
+```{r parse2, echo=FALSE}
+kable(head(trenutne_vijesti,2), format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+## rvest - parsiranje 3
+
+```{r obradinode, eval=FALSE}
+obradi.node <- function(node){
+    data.frame(
+        url = node %>% 
+                html_attr("href") 
+        naslov = node %>% 
+                    html_node(".naslov") %>% 
+                    xml_text()
+        podnaslov = node %>% 
+                        html_node(".podnaslov") %>% 
+                        xml_text()
+        opis = node %>% 
+                html_children() %>% 
+                extract(3) %>% 
+                xml_text() 
+    )
+}
+```
+
+## rvest - čišćenje
+
+```{r clean1}
+trenutne_vijesti <- trenutne_vijesti %>% # razbij podnaslov na dvije kolone
+    mutate(
+        vrijeme = gsub("/.*", "", podnaslov) %>% # uzmi sve prije '/'
+                    trimws() %>% # trim whitespace
+                    strptime("%d.%m.%Y. %H:%M:%S") %>% # pretvori u datetime
+                    as.POSIXct(), # cast as.POSIXct
+        kategorija = gsub(".*/", "", podnaslov) %>% # uzmi sve nakon '/'
+                        trimws() # trim whitespace
+    ) %>% 
+    select(-podnaslov) # makni staru kolonu
+```
+```{r clean2, echo=FALSE}
+kable(head(trenutne_vijesti,2), format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+## RSelenium
+
+- [RSelenium Basics](https://cran.r-project.org/web/packages/RSelenium/vignettes/RSelenium-basics.html){target="_blank"}
+- pristup DOM elementima
+- upisivanje teksta, slanje klikova na elemente
+- JavaScript injection
+- pristup (i)frame objektima
+
+## RSelenium - instalacija
+
+[Selenium Standalone Server](http://selenium-release.storage.googleapis.com/index.html){target="_blank"}
+
+Browser drivers
+
+- [Firefox geckodriver](https://github.com/mozilla/geckodriver/releases){target="_blank"}
+- [ChromeDriver](https://sites.google.com/a/chromium.org/chromedriver/){target="_blank"}
+
+Više detalja na [seleniumhq.org](https://www.seleniumhq.org/download/){target="_blank"}
+
+## RSelenium - pokretanje
+
+cmd
+```
+>java -jar selenium-server-standalone-x.xx.x.jar [-port xxxx]
+```
+Default port = 4444
+
+```{r selenrun, eval=FALSE}
+library(RSelenium)
+# ! start Selenium server first !
+# connect to browser
+remDr <- remoteDriver(browser = "chrome", port=4444)
+# open browser
+remDr$open()
+# starting url
+home_url <- "http://edoc.sabor.hr/Fonogrami.aspx"
+# navigate page
+remDr$navigate(home_url)
+```
+
+## RSelenium - parsiranje
+
+```{r selenget, eval=FALSE}
+# get element by class
+remDr$findElements(using = "class", value = "dxgvDataRow_SaborPurpleTheme")
+# get element by css
+remDr$findElement(using = 'css', value = '.dxp-current')
+
+# read attribute value 
+webElem$getElementAttribute(attrName = "href") 
+# read multiple text values # tds = list of webElements
+sapply(unlist(tds), function(x) x$getElementText()) 
+```
+
+## RSelenium - send keys and clicks
+
+```{r selenevents, eval=FALSE}
+# click Next page # btnNext = webEelement
+btnNext$clickElement()
+# wait for reload (!)
+Sys.sleep(4)
+
+# send keystrokes
+remDr$navigate("http://www.google.com/ncr")
+webElem <- remDr$findElement(using = "css", "[name = 'q']")
+webElem$sendKeysToElement(list("R Cran", key = "enter"))
+```
+
