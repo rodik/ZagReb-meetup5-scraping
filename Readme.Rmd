@@ -1,0 +1,6 @@
+---
+title: "Scraping with rvest and RSelenium"
+output: github_document
+---
+
+Prezentacija je u prez_slidy.html
