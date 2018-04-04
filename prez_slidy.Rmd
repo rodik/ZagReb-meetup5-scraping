@@ -332,8 +332,11 @@ input_od<-"1.1.2017"
 input_do<-"31.3.2017"
 input_vrsta<-c("Izvođenje radova", "Pružanje usluga", "Isporuka roba")
 
-#ovim želim npr. unijeti da br. dokumenta mora sadržati f3 (u mom slučaju su to bile one javne nabave kod kojih je postupak uspješno okončan i odabran je pružatelj usluge i/ili izvođač radova); datum od i datum do te vrsta ugovora. Ovo inače nije potrebno ali radi specifičnosti kako je posložena stranica oglasnika javnih nabava ovo je korišteno kao filter kako bi mogli dohvatiti sve dokumente.
+# ovim želim npr. unijeti da br. dokumenta mora sadržati f3 (u mom slučaju su to bile one javne nabave 
+## kod kojih je postupak uspješno okončan i odabran je pružatelj usluge i/ili izvođač radova); 
 
+# datum od i datum do te vrsta ugovora. Ovo inače nije potrebno ali radi specifičnosti kako 
+## je posložena stranica oglasnika javnih nabava ovo je korišteno kao filter kako bi mogli dohvatiti sve dokumente.
 ```
 
 ## RSelenium - sending keys, clicks, doubleclicking itd. u iframe 
