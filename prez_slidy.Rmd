@@ -16,9 +16,14 @@ library(kableExtra) # print table
 
 ![](img/ZagReb.png)
 
-Filip Rodik, Ana Janković
 
-2018-04-04
+Filip Rodik, Ana Janković 
+
+HUB385, 2018-04-04
+
+- Prezentacija: http://rpubs.com/rodik/zagreb5
+- [Github projekt prezentacije](https://github.com/rodik/ZagReb-meetup5-scraping)
+- [Github projekt Sabor scrapera](https://github.com/rodik/Sabor)
 
 ## Teme
 
@@ -112,9 +117,10 @@ url # print
 
 ## rvest - simple
 
-html_table
-preuzeti projekt skrejpanja drzavnog registra imovine
+__html_table()__ funkcija
 ```{r cars, eval=FALSE}
+di_url <- "http://registar-imovina.gov.hr/default.aspx?action=nekretnine&page=1&posiljatelj=&vrsta_nek=6&vrsta_vla=&pbr=&zup="
+
 parsiraj.stranicu <- function(url){
     # pokupi html
     stranica <- read_html(url, encoding = "UTF-8")
@@ -148,7 +154,6 @@ parsiraj.stranicu <- function(url){
 
 ## rvest - parsiranje 2
 
-Čitanje HTML-a
 ```{r parse1, cache.vars=c("trenutne_vijesti")}
 # procitaj stranicu
 arhiva_html <- read_html(url)
@@ -171,14 +176,14 @@ obradi.node <- function(node){
                 html_attr("href") 
         naslov = node %>% 
                     html_node(".naslov") %>% 
-                    xml_text()
+                    html_text()
         podnaslov = node %>% 
                         html_node(".podnaslov") %>% 
-                        xml_text()
+                        html_text()
         opis = node %>% 
                 html_children() %>% 
                 extract(3) %>% 
-                xml_text() 
+                html_text() 
     )
 }
 ```
@@ -270,3 +275,130 @@ webElem <- remDr$findElement(using = "css", "[name = 'q']")
 webElem$sendKeysToElement(list("R Cran", key = "enter"))
 ```
 
+## RSelenium - iframe 1
+
+```{r, eval=FALSE}
+remDr <- remoteDriver(browser = "chrome", port=4567)
+# open browser
+remDr$open()
+url<-"https://eojn.nn.hr/Oglasnik/"
+
+input_br<-"f3"
+input_od<-"1.1.2017"
+input_do<-"31.3.2017"
+input_vrsta<-c("Izvođenje radova", "Pružanje usluga", "Isporuka roba")
+
+# hederi # imao sam ih pri ruci
+remDr$setTimeout(type = "implicit", milliseconds = 5000)
+remDr$setTimeout(type = "page load", milliseconds = 5000)
+
+remDr$navigate(url)
+webElem<-remDr$findElements(using = "css selector", value="#TrazilicaCtl1_uiJednostavnaTrazilica")
+webElement<-webElem[[1]]
+
+```
+
+## R Selenium - iframe 2
+
+Kada su web elementi do kojih želimo doći postavljeni unutar iframe-a, ukratko - potrebno je "ući u iframe" pa tek onda napraviti ono što se želi.
+
+```{r, eval=FALSE}
+#ovdje dohvatamo neki odgovarajući web element
+webElem<-remDr$findElements(using = "css selector", value="#TrazilicaCtl1_uiJednostavnaTrazilica")
+#rezultirajući objekt je bio lista, u kojoj je webelement samo 
+## prvi element liste (otuda i ovaj odabir samo prvog elementa)
+webElement<-webElem[[1]] 
+webElement$clickElement()
+# ovim prethodnim smo došli na stranicu koja se otvorila i gdje je cijeli dio, 
+## u biti "obrazac"+"tablica" unutar iframe-a.
+
+# biramo web element koji je iframe
+webElem<-remDr$findElements("css", "iframe")
+# naredbom switchtoiframe mu kažemo da na toj stranici koju 
+## smo otvorili prebaci se unutar iframe-a
+remDr$switchToFrame(webElem[[1]]) 
+```
+
+## R Selenium - iframe 3
+
+Kada smo unutar iframe-a onda možemo unositi što nam treba u iframe tj. popunjavati parametre koji nam trebaju da dobijemo tržilicom ono što nas interesira; odnosno sada sve naredbe što šaljemo, i elementi koje biramo su unutar ovog iframe-a.
+
+```{r}
+#Primjer:
+#prethodno su sačuvani određeni parametri koji nas interesiraju:
+
+input_br<-"f3"
+input_od<-"1.1.2017"
+input_do<-"31.3.2017"
+input_vrsta<-c("Izvođenje radova", "Pružanje usluga", "Isporuka roba")
+
+#ovim želim npr. unijeti da br. dokumenta mora sadržati f3 (u mom slučaju su to bile one javne nabave kod kojih je postupak uspješno okončan i odabran je pružatelj usluge i/ili izvođač radova); datum od i datum do te vrsta ugovora. Ovo inače nije potrebno ali radi specifičnosti kako je posložena stranica oglasnika javnih nabava ovo je korišteno kao filter kako bi mogli dohvatiti sve dokumente.
+
+```
+
+## RSelenium - sending keys, clicks, doubleclicking itd. u iframe 
+
+```{r, eval=FALSE}
+# dohvat određenih polja u koja se želi staviti vrijednost po kojoj će se filtrirati tablica koja se treba dobiti
+broj_objave<-remDr$findElements(using = "css selector", value = "#uiFilter_Txt_OznakaDokumenta") 
+broj_objave<-broj_objave[[1]]
+broj_objave$sendKeysToElement(list(input_br))
+# dohvat određenih polja u koja se želi staviti vrijednost po kojoj će se filtrirati tablica koja se treba dobiti
+vrsta_ugovora<-remDr$findElements(using = "css selector", value = "#uiFilter_Txt_TipNabave")
+vrsta_ugovora<-vrsta_ugovora[[1]]
+# ovdje se salje vrsta ugovora tj. da mora sadržati input "izvođenje radova"
+vrsta_ugovora$sendKeysToElement(list(input_vrsta[1])) 
+```
+
+Ovo je u konkretnom slučaju bilo nužno da bi se "filtrirala" tablica (pojašnjenje vezano za stranicu EOJN)
+
+## RSelenium - sending keys, clicks, doubleclicking itd. u iframe (nastavak)
+
+I sad dalje isto se ide odabirom datuma, itd.
+```{r, eval=F}
+datum_objave_od<-remDr$findElements(using = "css selector", value="#uiFilter_Calendar_DatumObjave_textBox")
+datum_objave_od<-datum_objave_od[[1]]
+datum_objave_od$sendKeysToElement(list(input_od))
+strelica<-remDr$findElements(using = "css selector", value = "#uiFilter_Toggle_DatumObjave_EndValue")
+strelica<-strelica[[1]]
+strelica$clickElement()
+datum_objave_do<-remDr$findElements(using = "css selector", value="#uiFilter_Calendar_DatumObjave_EndValue_textBox")
+datum_objave_do<-datum_objave_do[[1]]
+datum_objave_do$sendKeysToElement(list(input_do))
+Sys.sleep(3)
+
+```
+
+## RSelenium - sending keys, clicks, doubleclicking itd. u iframe  (nastavak)
+
+I na kraju tražimo prema zadanim parametrima:
+```{r, eval=FALSE}
+trazi<-remDr$findElements(using = "css selector", value=".PreglediTraziButton")
+trazi<-trazi[[1]]
+trazi$clickElement()
+
+```
+
+## RSelenium - sending keys, clicks, doubleclicking itd. u iframe  (nastavak)
+
+```{r, eval=FALSE}
+
+#kad sam došla do tablice malo teže se išlo pa sam morala ići na css selector
+tablica<-remDr$findElements(using="css selector", value = ".font-bold-grey")
+tablica<-tablica[[1]]
+detalji1<-detalji$findElements(using = "css selector", value = ".DetailsBtn")
+detalji1<-detalji1[[1]]
+detalji1$doubleclick()
+dokument<-remDr$findElements(using = "css selector", value = "#uiDokumentPodaci_uiDocumentCtl_uiOpenDocumentHtml")
+dokument<-dokument[[1]]
+dokument$clickElement()
+
+povratak<-remDr$findElements(using = "css selector", value="#uiDokumentPodaci_uiOdustani")
+povratak<-povratak[[1]]
+povratak$clickElement()
+
+```
+
+##Plan:
+
+Za olakšati si kasnije namjera mi je složiti to u funkciju......to be continued....

@@ -64,7 +64,12 @@ Filip Rodik; Ana Janković
 
 </div>
 <p>Filip Rodik, Ana Janković</p>
-<p>2018-04-04</p>
+<p>HUB385, 2018-04-04</p>
+<ul>
+<li>Prezentacija: <a href="http://rpubs.com/rodik/zagreb5" class="uri">http://rpubs.com/rodik/zagreb5</a></li>
+<li><a href="https://github.com/rodik/ZagReb-meetup5-scraping">Github projekt prezentacije</a></li>
+<li><a href="https://github.com/rodik/Sabor">Github projekt Sabor scrapera</a></li>
+</ul>
 </div>
 <div id="teme" class="slide section level2">
 <h2>Teme</h2>
@@ -171,8 +176,10 @@ url <span class="co"># print</span></code></pre></div>
 </div>
 <div id="rvest---simple" class="slide section level2">
 <h2>rvest - simple</h2>
-<p>html_table preuzeti projekt skrejpanja drzavnog registra imovine</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">parsiraj.stranicu &lt;-<span class="st"> </span><span class="cf">function</span>(url){
+<p><strong>html_table()</strong> funkcija</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">di_url &lt;-<span class="st"> &quot;http://registar-imovina.gov.hr/default.aspx?action=nekretnine&amp;page=1&amp;posiljatelj=&amp;vrsta_nek=6&amp;vrsta_vla=&amp;pbr=&amp;zup=&quot;</span>
+
+parsiraj.stranicu &lt;-<span class="st"> </span><span class="cf">function</span>(url){
     <span class="co"># pokupi html</span>
     stranica &lt;-<span class="st"> </span><span class="kw">read_html</span>(url, <span class="dt">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>)
     <span class="co"># dohvati tablicu</span>
@@ -202,7 +209,6 @@ url <span class="co"># print</span></code></pre></div>
 </div>
 <div id="rvest---parsiranje-2" class="slide section level2">
 <h2>rvest - parsiranje 2</h2>
-<p>Čitanje HTML-a</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># procitaj stranicu</span>
 arhiva_html &lt;-<span class="st"> </span><span class="kw">read_html</span>(url)
 <span class="co"># procitaj trenutnu stranicu kao data.frame</span>
@@ -266,14 +272,14 @@ VRHUNSKI hrvatski znanstvenici koji pišu za Index lab čitateljima su uputili s
 <span class="st">                </span><span class="kw">html_attr</span>(<span class="st">&quot;href&quot;</span>) 
         <span class="dt">naslov =</span> node <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">                    </span><span class="kw">html_node</span>(<span class="st">&quot;.naslov&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">                    </span><span class="kw">xml_text</span>()
+<span class="st">                    </span><span class="kw">html_text</span>()
         <span class="dt">podnaslov =</span> node <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">                        </span><span class="kw">html_node</span>(<span class="st">&quot;.podnaslov&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">                        </span><span class="kw">xml_text</span>()
+<span class="st">                        </span><span class="kw">html_text</span>()
         <span class="dt">opis =</span> node <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">                </span><span class="kw">html_children</span>() <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">                </span><span class="kw">extract</span>(<span class="dv">3</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">                </span><span class="kw">xml_text</span>() 
+<span class="st">                </span><span class="kw">html_text</span>() 
     )
 }</code></pre></div>
 </div>
@@ -406,6 +412,111 @@ btnNext<span class="op">$</span><span class="kw">clickElement</span>()
 remDr<span class="op">$</span><span class="kw">navigate</span>(<span class="st">&quot;http://www.google.com/ncr&quot;</span>)
 webElem &lt;-<span class="st"> </span>remDr<span class="op">$</span><span class="kw">findElement</span>(<span class="dt">using =</span> <span class="st">&quot;css&quot;</span>, <span class="st">&quot;[name = 'q']&quot;</span>)
 webElem<span class="op">$</span><span class="kw">sendKeysToElement</span>(<span class="kw">list</span>(<span class="st">&quot;R Cran&quot;</span>, <span class="dt">key =</span> <span class="st">&quot;enter&quot;</span>))</code></pre></div>
+</div>
+<div id="rselenium---iframe-1" class="slide section level2">
+<h2>RSelenium - iframe 1</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">remDr &lt;-<span class="st"> </span><span class="kw">remoteDriver</span>(<span class="dt">browser =</span> <span class="st">&quot;chrome&quot;</span>, <span class="dt">port=</span><span class="dv">4567</span>)
+<span class="co"># open browser</span>
+remDr<span class="op">$</span><span class="kw">open</span>()
+url&lt;-<span class="st">&quot;https://eojn.nn.hr/Oglasnik/&quot;</span>
+
+input_br&lt;-<span class="st">&quot;f3&quot;</span>
+input_od&lt;-<span class="st">&quot;1.1.2017&quot;</span>
+input_do&lt;-<span class="st">&quot;31.3.2017&quot;</span>
+input_vrsta&lt;-<span class="kw">c</span>(<span class="st">&quot;Izvođenje radova&quot;</span>, <span class="st">&quot;Pružanje usluga&quot;</span>, <span class="st">&quot;Isporuka roba&quot;</span>)
+
+<span class="co"># hederi # imao sam ih pri ruci</span>
+remDr<span class="op">$</span><span class="kw">setTimeout</span>(<span class="dt">type =</span> <span class="st">&quot;implicit&quot;</span>, <span class="dt">milliseconds =</span> <span class="dv">5000</span>)
+remDr<span class="op">$</span><span class="kw">setTimeout</span>(<span class="dt">type =</span> <span class="st">&quot;page load&quot;</span>, <span class="dt">milliseconds =</span> <span class="dv">5000</span>)
+
+remDr<span class="op">$</span><span class="kw">navigate</span>(url)
+webElem&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;#TrazilicaCtl1_uiJednostavnaTrazilica&quot;</span>)
+webElement&lt;-webElem[[<span class="dv">1</span>]]</code></pre></div>
+</div>
+<div id="r-selenium---iframe-2" class="slide section level2">
+<h2>R Selenium - iframe 2</h2>
+<p>Kada su web elementi do kojih želimo doći postavljeni unutar iframe-a, ukratko - potrebno je “ući u iframe” pa tek onda napraviti ono što se želi.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#ovdje dohvatamo neki odgovarajući web element</span>
+webElem&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;#TrazilicaCtl1_uiJednostavnaTrazilica&quot;</span>)
+<span class="co">#rezultirajući objekt je bio lista, u kojoj je webelement samo </span>
+## prvi element liste (otuda i ovaj odabir samo prvog elementa)
+webElement&lt;-webElem[[<span class="dv">1</span>]] 
+webElement<span class="op">$</span><span class="kw">clickElement</span>()
+<span class="co"># ovim prethodnim smo došli na stranicu koja se otvorila i gdje je cijeli dio, </span>
+## u biti &quot;obrazac&quot;+&quot;tablica&quot; unutar iframe-a.
+
+<span class="co"># biramo web element koji je iframe</span>
+webElem&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="st">&quot;css&quot;</span>, <span class="st">&quot;iframe&quot;</span>)
+<span class="co"># naredbom switchtoiframe mu kažemo da na toj stranici koju </span>
+## smo otvorili prebaci se unutar iframe-a
+remDr<span class="op">$</span><span class="kw">switchToFrame</span>(webElem[[<span class="dv">1</span>]]) </code></pre></div>
+</div>
+<div id="r-selenium---iframe-3" class="slide section level2">
+<h2>R Selenium - iframe 3</h2>
+<p>Kada smo unutar iframe-a onda možemo unositi što nam treba u iframe tj. popunjavati parametre koji nam trebaju da dobijemo tržilicom ono što nas interesira; odnosno sada sve naredbe što šaljemo, i elementi koje biramo su unutar ovog iframe-a.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#Primjer:</span>
+<span class="co">#prethodno su sačuvani određeni parametri koji nas interesiraju:</span>
+
+input_br&lt;-<span class="st">&quot;f3&quot;</span>
+input_od&lt;-<span class="st">&quot;1.1.2017&quot;</span>
+input_do&lt;-<span class="st">&quot;31.3.2017&quot;</span>
+input_vrsta&lt;-<span class="kw">c</span>(<span class="st">&quot;Izvođenje radova&quot;</span>, <span class="st">&quot;Pružanje usluga&quot;</span>, <span class="st">&quot;Isporuka roba&quot;</span>)
+
+<span class="co">#ovim želim npr. unijeti da br. dokumenta mora sadržati f3 (u mom slučaju su to bile one javne nabave kod kojih je postupak uspješno okončan i odabran je pružatelj usluge i/ili izvođač radova); datum od i datum do te vrsta ugovora. Ovo inače nije potrebno ali radi specifičnosti kako je posložena stranica oglasnika javnih nabava ovo je korišteno kao filter kako bi mogli dohvatiti sve dokumente.</span></code></pre></div>
+</div>
+<div id="rselenium---sending-keys-clicks-doubleclicking-itd.-u-iframe" class="slide section level2">
+<h2>RSelenium - sending keys, clicks, doubleclicking itd. u iframe</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># dohvat određenih polja u koja se želi staviti vrijednost po kojoj će se filtrirati tablica koja se treba dobiti</span>
+broj_objave&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;#uiFilter_Txt_OznakaDokumenta&quot;</span>) 
+broj_objave&lt;-broj_objave[[<span class="dv">1</span>]]
+broj_objave<span class="op">$</span><span class="kw">sendKeysToElement</span>(<span class="kw">list</span>(input_br))
+<span class="co"># dohvat određenih polja u koja se želi staviti vrijednost po kojoj će se filtrirati tablica koja se treba dobiti</span>
+vrsta_ugovora&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;#uiFilter_Txt_TipNabave&quot;</span>)
+vrsta_ugovora&lt;-vrsta_ugovora[[<span class="dv">1</span>]]
+<span class="co"># ovdje se salje vrsta ugovora tj. da mora sadržati input &quot;izvođenje radova&quot;</span>
+vrsta_ugovora<span class="op">$</span><span class="kw">sendKeysToElement</span>(<span class="kw">list</span>(input_vrsta[<span class="dv">1</span>])) </code></pre></div>
+<p>Ovo je u konkretnom slučaju bilo nužno da bi se “filtrirala” tablica (pojašnjenje vezano za stranicu EOJN)</p>
+</div>
+<div id="rselenium---sending-keys-clicks-doubleclicking-itd.-u-iframe-nastavak" class="slide section level2">
+<h2>RSelenium - sending keys, clicks, doubleclicking itd. u iframe (nastavak)</h2>
+<p>I sad dalje isto se ide odabirom datuma, itd.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">datum_objave_od&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;#uiFilter_Calendar_DatumObjave_textBox&quot;</span>)
+datum_objave_od&lt;-datum_objave_od[[<span class="dv">1</span>]]
+datum_objave_od<span class="op">$</span><span class="kw">sendKeysToElement</span>(<span class="kw">list</span>(input_od))
+strelica&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;#uiFilter_Toggle_DatumObjave_EndValue&quot;</span>)
+strelica&lt;-strelica[[<span class="dv">1</span>]]
+strelica<span class="op">$</span><span class="kw">clickElement</span>()
+datum_objave_do&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;#uiFilter_Calendar_DatumObjave_EndValue_textBox&quot;</span>)
+datum_objave_do&lt;-datum_objave_do[[<span class="dv">1</span>]]
+datum_objave_do<span class="op">$</span><span class="kw">sendKeysToElement</span>(<span class="kw">list</span>(input_do))
+<span class="kw">Sys.sleep</span>(<span class="dv">3</span>)</code></pre></div>
+</div>
+<div id="rselenium---sending-keys-clicks-doubleclicking-itd.-u-iframe-nastavak-1" class="slide section level2">
+<h2>RSelenium - sending keys, clicks, doubleclicking itd. u iframe (nastavak)</h2>
+<p>I na kraju tražimo prema zadanim parametrima:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">trazi&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;.PreglediTraziButton&quot;</span>)
+trazi&lt;-trazi[[<span class="dv">1</span>]]
+trazi<span class="op">$</span><span class="kw">clickElement</span>()</code></pre></div>
+</div>
+<div id="rselenium---sending-keys-clicks-doubleclicking-itd.-u-iframe-nastavak-2" class="slide section level2">
+<h2>RSelenium - sending keys, clicks, doubleclicking itd. u iframe (nastavak)</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#kad sam došla do tablice malo teže se išlo pa sam morala ići na css selector</span>
+tablica&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using=</span><span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;.font-bold-grey&quot;</span>)
+tablica&lt;-tablica[[<span class="dv">1</span>]]
+detalji1&lt;-detalji<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;.DetailsBtn&quot;</span>)
+detalji1&lt;-detalji1[[<span class="dv">1</span>]]
+detalji1<span class="op">$</span><span class="kw">doubleclick</span>()
+dokument&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;#uiDokumentPodaci_uiDocumentCtl_uiOpenDocumentHtml&quot;</span>)
+dokument&lt;-dokument[[<span class="dv">1</span>]]
+dokument<span class="op">$</span><span class="kw">clickElement</span>()
+
+povratak&lt;-remDr<span class="op">$</span><span class="kw">findElements</span>(<span class="dt">using =</span> <span class="st">&quot;css selector&quot;</span>, <span class="dt">value=</span><span class="st">&quot;#uiDokumentPodaci_uiOdustani&quot;</span>)
+povratak&lt;-povratak[[<span class="dv">1</span>]]
+povratak<span class="op">$</span><span class="kw">clickElement</span>()</code></pre></div>
+</div>
+<div id="plan" class="slide section level2">
+<h2>Plan:</h2>
+<p>Za olakšati si kasnije namjera mi je složiti to u funkciju……to be continued….</p>
 </div>
 
   <!-- dynamically load mathjax for compatibility with self-contained -->

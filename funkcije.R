@@ -20,16 +20,16 @@ obradi.node <- function(node){
                     emptyCharToNA(),
             naslov = node %>% 
                         html_node(".naslov") %>% 
-                        xml_text() %>% 
+                        html_text() %>% 
                         emptyCharToNA(),
             podnaslov = node %>% 
                             html_node(".podnaslov") %>% 
-                            xml_text() %>% 
+                            html_text() %>% 
                             emptyCharToNA(),
             opis = node %>% 
                     html_children() %>% 
                     extract(3) %>% 
-                    xml_text() %>% 
+                    html_text() %>% 
                     emptyCharToNA()
         )
     }, warning = function(w) {
